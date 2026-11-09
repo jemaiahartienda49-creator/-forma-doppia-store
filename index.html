@@ -1728,20 +1728,23 @@ $("placeOrder").addEventListener("click",async()=>{
     };
 
   });
-
   const total = getTotal();
 
-  $("placeOrder").disabled = true;
-  $("checkoutMessage").textContent =
-    "Submitting your order...";
+$("placeOrder").disabled = true;
+$("checkoutMessage").textContent =
+  "Submitting your order...";
 
-  try{
+try{
 
-    const order = await addDoc(
-      collection(db,"orders"),
-      {
-        userId:currentUser.uid,
+  console.log("AUTH UID:", currentUser?.uid);
+  console.log("PAYMENT STATUS:", "pending");
+  console.log("PAYMENT METHOD:", $("paymentSelect").value);
 
+  const order = await addDoc(
+    collection(db,"orders"),
+    {
+      userId:currentUser.uid,
+  
         customer:{
           name,
           phone,
