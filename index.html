@@ -1004,146 +1004,100 @@ footer p,footer a {
 <!-- END OF PART 2 -->
 <!-- PART 3 WILL CONTAIN JAVASCRIPT AND FIREBASE -->
   
-  
-<!-- =================================
-     PART 3 - JAVASCRIPT & FIREBASE
+<!-- ================================
+     PART 3 - JAVASCRIPT AND FIREBASE
 ================================= -->
 
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<!-- Firebase CDN -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <script>
-// ===================================
-// FIREBASE CONFIGURATION
-// ===================================
+// ==================================
+// 1. FIREBASE CONFIGURATION
+// ==================================
 
-// Replace these values with your existing Firebase Web App config.
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
+  apiKey: "AIzaSyCFG89ZrF_SfNJfyAfX5IHZtMPYcCQY_Uo",
   authDomain: "forma-doppia.firebaseapp.com",
   projectId: "forma-doppia",
   storageBucket: "forma-doppia.firebasestorage.app",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  messagingSenderId: "785041343",
+  appId: "1:785041343:web:d4b5d159542642aa78030a",
+  measurementId: "G-T29DY5VE3B"
 };
 
-let auth = null;
-let db = null;
-let firebaseReady = false;
+firebase.initializeApp(firebaseConfig);
 
-try {
-  if (
-    firebaseConfig.apiKey !== "YOUR_API_KEY" &&
-    firebaseConfig.appId !== "YOUR_APP_ID"
-  ) {
-    firebase.initializeApp(firebaseConfig);
-    auth = firebase.auth();
-    db = firebase.firestore();
-    firebaseReady = true;
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let currentUser = null;
+let isAdmin = false;
+let products = [];
+let cart = JSON.parse(localStorage.getItem("formaCart") || "[]");
+let couriers = [];
+let selectedCourier = "";
+
+// ==================================
+// 2. DEFAULT PRODUCTS
+// ==================================
+
+const defaultProducts = [
+  {
+    id: "chair-ladder",
+    name: "Forma Doppia Chair Ladder",
+    category: "chair",
+    price: 2499,
+    description: "Functional two-in-one chair and ladder.",
+    image: "https://images.unsplash.com/photo-1503602642458-232111445657?w=700"
+  },
+  {
+    id: "modern-chair",
+    name: "Modern Comfort Chair",
+    category: "chair",
+    price: 1899,
+    description: "A stylish chair for everyday comfort.",
+    image: "https://images.unsplash.com/photo-1598300056393-4aac492f4344?w=700"
+  },
+  {
+    id: "wood-table",
+    name: "Minimalist Wooden Table",
+    category: "table",
+    price: 3299,
+    description: "A simple and functional wooden table.",
+    image: "https://images.unsplash.com/photo-1499933374294-4584851497cc?w=700"
+  },
+  {
+    id: "modern-furniture",
+    name: "Modern Living Furniture",
+    category: "furniture",
+    price: 4599,
+    description: "A functional addition to your living space.",
+    image: "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=700"
   }
-} catch(error) {
-  console.error("Firebase initialization:", error);
+];
+
+// ==================================
+// 3. GENERAL FUNCTIONS
+// ==================================
+
+function money(amount) {
+  return "₱" + Number(amount || 0).toLocaleString("en-PH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
 }
 
-// ===================================
-// STORE SETTINGS
-// ===================================
-
-const ADMIN_EMAIL = "jnhjfurnishingscompany@gmail.com";
-
-let products = [
-  {
-    id:"FD001",
-    name:"Forma Doppia Chair Ladder",
-    category:"chair",
-    price:2500,
-    image:"cover.png",
-    description:"Functional double-purpose furniture."
-  },
-  {
-    id:"FD002",
-    name:"Modern Wooden Chair",
-    category:"chair",
-    price:1800,
-    image:"cover.png",
-    description:"Comfortable and timeless design."
-  },
-  {
-    id:"FD003",
-    name:"Minimalist Side Table",
-    category:"table",
-    price:1200,
-    image:"cover.png",
-    description:"A stylish addition to your space."
-  },
-  {
-    id:"FD004",
-    name:"Multi-purpose Furniture",
-    category:"furniture",
-    price:3200,
-    image:"cover.png",
-    description:"Smart furniture for everyday living."
-  }
-];
-
-let cart = [];
-let selectedCourier = "";
-let selectedCategory = "all";
-let orders = [];
-
-let couriers = [
-  {
-    id:"jnt",
-    name:"J&T Express",
-    logo:"https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/J%26T_Express_logo.svg/320px-J%26T_Express_logo.svg.png"
-  },
-  {
-    id:"ninja",
-    name:"Ninja Van",
-    logo:"https://www.ninjavan.co/en-ph/wp-content/uploads/sites/2/2023/08/ninja-van-logo.png"
-  },
-  {
-    id:"flash",
-    name:"Flash Express",
-    logo:"https://www.flashexpress.ph/images/logo.png"
-  },
-  {
-    id:"lbc",
-    name:"LBC Express",
-    logo:"https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/LBC_Express_logo.svg/320px-LBC_Express_logo.svg.png"
-  },
-  {
-    id:"2go",
-    name:"2GO Express",
-    logo:""
-  },
-  {
-    id:"lalamove",
-    name:"Lalamove",
-    logo:""
-  },
-  {
-    id:"grab",
-    name:"GrabExpress",
-    logo:""
-  },
-  {
-    id:"spx",
-    name:"SPX Express",
-    logo:""
-  }
-];
-
-// ===================================
-// BASIC UTILITIES
-// ===================================
-
-function peso(amount) {
-  return "₱" + Number(amount || 0).toLocaleString("en-PH", {
-    minimumFractionDigits:2,
-    maximumFractionDigits:2
-  });
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
 }
 
 function showToast(message) {
@@ -1154,248 +1108,397 @@ function showToast(message) {
   clearTimeout(window.toastTimer);
   window.toastTimer = setTimeout(() => {
     toast.classList.remove("show");
-  },3000);
+  }, 3000);
 }
 
 function openModal(id) {
-  document.getElementById(id).classList.add("show");
+  document.getElementById(id)?.classList.add("show");
+
+  if (id === "cartModal") renderCart();
+  if (id === "adminModal") updateAdminDisplay();
 }
 
 function closeModal(id) {
-  document.getElementById(id).classList.remove("show");
+  document.getElementById(id)?.classList.remove("show");
 }
 
-// ===================================
-// PRODUCT DISPLAY
-// ===================================
+// Close modal when clicking outside its content
+document.querySelectorAll(".modal").forEach(modal => {
+  modal.addEventListener("click", event => {
+    if (event.target === modal) {
+      modal.classList.remove("show");
+    }
+  });
+});
+
+// ==================================
+// 4. PRODUCT MANAGEMENT
+// ==================================
+
+async function loadProducts() {
+  try {
+    const snapshot = await db.collection("products").get();
+
+    if (snapshot.empty) {
+      products = defaultProducts;
+    } else {
+      products = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    }
+
+    renderProducts();
+
+  } catch (error) {
+    console.error("Product loading error:", error);
+    products = defaultProducts;
+    renderProducts();
+  }
+}
 
 function renderProducts(list = products) {
   const grid = document.getElementById("productGrid");
-  grid.innerHTML = "";
+  const noProducts = document.getElementById("noProducts");
 
-  document.getElementById("noProducts").classList.toggle(
-    "hidden",list.length !== 0
-  );
+  if (!grid) return;
 
-  list.forEach(product => {
-    const card = document.createElement("div");
-    card.className = "product-card";
+  if (!list.length) {
+    grid.innerHTML = "";
+    noProducts?.classList.remove("hidden");
+    return;
+  }
 
-    card.innerHTML = `
+  noProducts?.classList.add("hidden");
+
+  grid.innerHTML = list.map(product => `
+    <article class="product-card">
       <div class="product-image">
-        <img src="${escapeHTML(product.image)}"
+        <img src="${escapeHTML(product.image || "")}"
              alt="${escapeHTML(product.name)}"
-             onerror="this.src='cover.png'">
-        <span class="product-tag">FORMA DOPPIA</span>
+             loading="lazy"
+             onerror="this.style.display='none'">
+        ${product.tag ? `<span class="product-tag">${escapeHTML(product.tag)}</span>` : ""}
       </div>
+
       <div class="product-info">
         <h3>${escapeHTML(product.name)}</h3>
-        <p>${escapeHTML(product.description)}</p>
-        <div class="product-price">${peso(product.price)}</div>
+        <p>${escapeHTML(product.description || "Quality furniture by Forma Doppia.")}</p>
+        <div class="product-price">${money(product.price)}</div>
+
         <div class="product-actions">
           <button class="primary-btn"
-            onclick="addToCart('${product.id}')">
+                  onclick="addToCart('${escapeHTML(product.id)}')">
             Add to Cart
           </button>
         </div>
       </div>
-    `;
-
-    grid.appendChild(card);
-  });
+    </article>
+  `).join("");
 }
 
-function escapeHTML(value) {
-  return String(value ?? "").replace(/[&<>"']/g, char => ({
-    "&":"&amp;",
-    "<":"&lt;",
-    ">":"&gt;",
-    '"':"&quot;",
-    "'":"&#39;"
-  })[char]);
-}
-
-function searchProducts(query) {
-  const term = query.trim().toLowerCase();
-
-  const results = products.filter(product => {
-    const matchesText =
-      product.name.toLowerCase().includes(term) ||
-      product.description.toLowerCase().includes(term);
-
-    const matchesCategory =
-      selectedCategory === "all" ||
-      product.category === selectedCategory;
-
-    return matchesText && matchesCategory;
+function filterProducts(category, button) {
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.classList.remove("active");
   });
 
-  renderProducts(results);
+  button?.classList.add("active");
+
+  if (category === "all") {
+    renderProducts();
+  } else {
+    renderProducts(products.filter(product =>
+      product.category === category
+    ));
+  }
+
+  const search = document.getElementById("productSearch");
+  if (search) search.value = "";
 }
 
-function filterProducts(category,button) {
-  selectedCategory = category;
+function searchProducts(keyword) {
+  const term = keyword.trim().toLowerCase();
+
+  const filtered = products.filter(product =>
+    `${product.name} ${product.category} ${product.description || ""}`
+      .toLowerCase()
+      .includes(term)
+  );
 
   document.querySelectorAll(".filter-btn").forEach(btn => {
     btn.classList.remove("active");
   });
 
-  button.classList.add("active");
+  renderProducts(filtered);
 
-  searchProducts(document.getElementById("productSearch").value);
+  const allButton = document.querySelector(".filter-btn");
+  if (allButton && !term) {
+    allButton.classList.add("active");
+  }
 }
 
-// ===================================
-// SHOPPING CART
-// ===================================
+// ==================================
+// 5. SHOPPING CART
+// ==================================
 
-function addToCart(id) {
-  const product = products.find(item => item.id === id);
+function saveCart() {
+  localStorage.setItem("formaCart", JSON.stringify(cart));
 
-  if (!product) return;
+  const count = cart.reduce((sum, item) =>
+    sum + item.quantity, 0
+  );
 
-  const existing = cart.find(item => item.id === id);
+  document.getElementById("cartCount").textContent = count;
+
+  renderCart();
+}
+
+function addToCart(productId) {
+  const product = products.find(p => p.id === productId);
+
+  if (!product) {
+    showToast("Product not found.");
+    return;
+  }
+
+  const existing = cart.find(item => item.id === productId);
 
   if (existing) {
     existing.quantity++;
   } else {
-    cart.push({...product,quantity:1});
+    cart.push({
+      id: product.id,
+      name: product.name,
+      price: Number(product.price),
+      image: product.image || "",
+      quantity: 1
+    });
   }
 
   saveCart();
   showToast(product.name + " added to cart!");
 }
 
-function removeFromCart(id) {
-  cart = cart.filter(item => item.id !== id);
+function changeQuantity(productId, amount) {
+  const item = cart.find(p => p.id === productId);
+  if (!item) return;
+
+  item.quantity += amount;
+
+  if (item.quantity <= 0) {
+    cart = cart.filter(p => p.id !== productId);
+  }
+
   saveCart();
 }
 
-function changeQuantity(id,change) {
-  const item = cart.find(item => item.id === id);
-
-  if (!item) return;
-
-  item.quantity += change;
-
-  if (item.quantity <= 0) {
-    removeFromCart(id);
-  } else {
-    saveCart();
-  }
+function removeFromCart(productId) {
+  cart = cart.filter(item => item.id !== productId);
+  saveCart();
+  showToast("Item removed.");
 }
 
 function getCartTotal() {
-  return cart.reduce((total,item) =>
-    total + item.price * item.quantity,0
+  return cart.reduce((sum, item) =>
+    sum + item.price * item.quantity, 0
   );
-}
-
-function saveCart() {
-  localStorage.setItem("formaCart",JSON.stringify(cart));
-  renderCart();
 }
 
 function renderCart() {
   const container = document.getElementById("cartItems");
+  const total = document.getElementById("cartTotal");
+  const checkoutTotal = document.getElementById("checkoutTotal");
 
-  document.getElementById("cartCount").textContent =
-    cart.reduce((sum,item) => sum + item.quantity,0);
+  if (!container) return;
 
   if (!cart.length) {
-    container.innerHTML = "<p>Your cart is empty.</p>";
+    container.innerHTML = `
+      <p style="text-align:center;padding:25px;color:#777">
+        Your cart is empty.
+      </p>`;
   } else {
     container.innerHTML = cart.map(item => `
       <div class="cart-item">
         <div>
           <strong>${escapeHTML(item.name)}</strong>
           <p style="font-size:12px;color:#777">
-            ${peso(item.price)} × ${item.quantity}
+            ${money(item.price)} each
           </p>
-          <button class="secondary-btn"
-            onclick="changeQuantity('${item.id}',-1)">−</button>
-          <button class="secondary-btn"
-            onclick="changeQuantity('${item.id}',1)">+</button>
+
+          <div style="margin-top:8px">
+            <button onclick="changeQuantity('${escapeHTML(item.id)}',-1)">−</button>
+            <span style="padding:0 10px">${item.quantity}</span>
+            <button onclick="changeQuantity('${escapeHTML(item.id)}',1)">+</button>
+            <button onclick="removeFromCart('${escapeHTML(item.id)}')"
+                    style="margin-left:8px;color:#a33">
+              Remove
+            </button>
+          </div>
         </div>
-        <div>
-          <strong>${peso(item.price * item.quantity)}</strong>
-          <button onclick="removeFromCart('${item.id}')"
-            style="display:block;border:0;background:none;color:#a33;margin-top:10px">
-            Remove
-          </button>
-        </div>
+
+        <strong>${money(item.price * item.quantity)}</strong>
       </div>
     `).join("");
   }
 
-  document.getElementById("cartTotal").textContent =
-    peso(getCartTotal());
+  const subtotal = getCartTotal();
+  const discount = localStorage.getItem("formaDiscount") === "claimed"
+    ? subtotal * 0.10
+    : 0;
 
-  document.getElementById("checkoutTotal").textContent =
-    peso(getCartTotal());
+  const finalTotal = subtotal - discount;
+
+  if (total) total.textContent = money(finalTotal);
+  if (checkoutTotal) checkoutTotal.textContent = money(finalTotal);
 }
 
-function openCheckout() {
-  if (!cart.length) {
-    showToast("Your cart is empty.");
+// ==================================
+// 6. FIREBASE AUTHENTICATION
+// ==================================
+
+async function signUp() {
+  const email = document.getElementById("authEmail").value.trim();
+  const password = document.getElementById("authPassword").value;
+
+  if (!email || password.length < 6) {
+    showToast("Enter a valid email and password (at least 6 characters).");
     return;
   }
 
-  closeModal("cartModal");
-  renderCouriers();
+  try {
+    await auth.createUserWithEmailAndPassword(email, password);
+    showToast("Account created successfully!");
 
-  if (auth && auth.currentUser) {
-    document.getElementById("customerEmail").value =
-      auth.currentUser.email || "";
+  } catch (error) {
+    showToast(error.message);
   }
-
-  openModal("checkoutModal");
 }
 
-// ===================================
-// COURIER MANAGEMENT
-// ===================================
+async function signIn() {
+  const email = document.getElementById("authEmail").value.trim();
+  const password = document.getElementById("authPassword").value;
 
-function loadCouriers() {
-  const saved = localStorage.getItem("formaCouriers");
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
+    showToast("Welcome back!");
 
-  if (saved) {
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function signOutUser() {
+  try {
+    await auth.signOut();
+    showToast("You have signed out.");
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+auth.onAuthStateChanged(async user => {
+  currentUser = user;
+  isAdmin = false;
+
+  const forms = document.getElementById("authForms");
+  const info = document.getElementById("userInfo");
+
+  if (user) {
+    forms.classList.add("hidden");
+    info.classList.remove("hidden");
+
+    document.getElementById("userEmail").textContent =
+      "Signed in as: " + user.email;
+
     try {
-      couriers = JSON.parse(saved);
-    } catch(error) {
-      console.error(error);
+      const adminDoc = await db.collection("admins")
+        .doc(user.uid).get();
+
+      isAdmin = adminDoc.exists;
+    } catch (error) {
+      console.error("Admin verification failed:", error);
     }
+
+    if (isAdmin) {
+      showToast("Admin access verified.");
+      loadAdminData();
+    }
+  } else {
+    forms.classList.remove("hidden");
+    info.classList.add("hidden");
+    document.getElementById("userEmail").textContent = "";
+    document.getElementById("adminPanel").classList.add("hidden");
+    document.getElementById("adminLogin").classList.remove("hidden");
   }
+});
+
+// ==================================
+// 7. DISCOUNT POPUP
+// ==================================
+
+function showDiscount() {
+  if (sessionStorage.getItem("discountShown")) return;
+
+  sessionStorage.setItem("discountShown", "yes");
+
+  setTimeout(() => {
+    document.getElementById("discountPopup")
+      ?.classList.add("show");
+  }, 2500);
 }
 
-function saveCouriers() {
-  localStorage.setItem("formaCouriers",JSON.stringify(couriers));
+function closeDiscount() {
+  document.getElementById("discountPopup")
+    ?.classList.remove("show");
+}
 
-  if (db) {
-    db.collection("storeSettings").doc("couriers")
-      .set({items:couriers,updatedAt:firebase.firestore.FieldValue.serverTimestamp()})
-      .catch(error => console.error("Courier sync:",error));
+function claimDiscount() {
+  localStorage.setItem("formaDiscount", "claimed");
+  closeDiscount();
+  renderCart();
+  showToast("Your 10% welcome discount is claimed!");
+}
+
+// ==================================
+// 8. COURIER MANAGEMENT
+// ==================================
+
+const defaultCouriers = [
+  { id: "jnt", name: "J&T Express", logo: "" },
+  { id: "other", name: "Other Courier", logo: "" }
+];
+
+async function loadCouriers() {
+  try {
+    const snapshot = await db.collection("couriers").get();
+
+    couriers = snapshot.empty
+      ? defaultCouriers
+      : snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+
+  } catch (error) {
+    couriers = defaultCouriers;
+    console.error(error);
   }
 
   renderCouriers();
-  renderAdminCouriers();
 }
 
 function renderCouriers() {
   const grid = document.getElementById("courierGrid");
+  if (!grid) return;
 
   grid.innerHTML = couriers.map(courier => `
     <button type="button"
-      class="courier-card ${selectedCourier === courier.id ? "selected" : ""}"
-      onclick="selectCourier('${courier.id}')">
+            class="courier-card ${selectedCourier === courier.id ? "selected" : ""}"
+            onclick="selectCourier('${escapeHTML(courier.id)}')">
 
-      ${
-        courier.logo
-        ? `<img src="${escapeHTML(courier.logo)}"
-             alt="${escapeHTML(courier.name)}"
-             onerror="this.style.display='none'">`
-        : `<div style="font-size:25px;margin-bottom:10px">🚚</div>`
-      }
+      ${courier.logo
+        ? `<img src="${escapeHTML(courier.logo)}" alt="${escapeHTML(courier.name)}">`
+        : `<div style="font-size:25px">🚚</div>`}
 
       <strong>${escapeHTML(courier.name)}</strong>
     </button>
@@ -1407,8 +1510,8 @@ function selectCourier(id) {
   renderCouriers();
 }
 
-function addCourier() {
-  if (!isAdmin()) {
+async function addCourier() {
+  if (!isAdmin || !currentUser) {
     showToast("Admin access required.");
     return;
   }
@@ -1421,440 +1524,408 @@ function addCourier() {
     return;
   }
 
-  couriers.push({
-    id:"custom-" + Date.now(),
-    name:name,
-    logo:logo
-  });
+  try {
+    await db.collection("couriers").add({
+      name,
+      logo,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
 
-  saveCouriers();
+    document.getElementById("newCourierName").value = "";
+    document.getElementById("newCourierLogo").value = "";
 
-  document.getElementById("newCourierName").value = "";
-  document.getElementById("newCourierLogo").value = "";
+    await loadCouriers();
+    loadAdminData();
+    showToast("Courier added successfully!");
 
-  showToast("Courier added!");
-}
-
-function deleteCourier(id) {
-  if (!isAdmin()) return;
-
-  couriers = couriers.filter(item => item.id !== id);
-
-  if (selectedCourier === id) selectedCourier = "";
-
-  saveCouriers();
-  showToast("Courier removed.");
-}
-
-function renderAdminCouriers() {
-  const container = document.getElementById("adminCourierList");
-
-  if (!container) return;
-
-  container.innerHTML = couriers.map(item => `
-    <div class="cart-item">
-      <strong>${escapeHTML(item.name)}</strong>
-      <button class="secondary-btn"
-        onclick="deleteCourier('${item.id}')">Delete</button>
-    </div>
-  `).join("");
-}
-
-// ===================================
-// DISCOUNT POPUP
-// ===================================
-
-function closeDiscount() {
-  document.getElementById("discountPopup").classList.remove("show");
-}
-
-function claimDiscount() {
-  localStorage.setItem("formaDiscountClaimed","yes");
-  closeDiscount();
-  showToast("Welcome discount claimed! Apply code WELCOME10 at checkout.");
-}
-
-setTimeout(() => {
-  if (!localStorage.getItem("formaDiscountClaimed")) {
-    document.getElementById("discountPopup").classList.add("show");
+  } catch (error) {
+    showToast("Unable to add courier: " + error.message);
   }
-},2500);
-
-// ===================================
-// FIREBASE AUTHENTICATION
-// ===================================
-
-function signUp() {
-  if (!auth) {
-    showToast("Firebase configuration is required.");
-    return;
-  }
-
-  const email = document.getElementById("authEmail").value.trim();
-  const password = document.getElementById("authPassword").value;
-
-  if (!email || password.length < 6) {
-    showToast("Enter a valid email and password (at least 6 characters).");
-    return;
-  }
-
-  auth.createUserWithEmailAndPassword(email,password)
-    .then(() => showToast("Account created successfully!"))
-    .catch(error => showToast(error.message));
 }
 
-function signIn() {
-  if (!auth) {
-    showToast("Firebase configuration is required.");
-    return;
-  }
+// ==================================
+// 9. CHECKOUT AND ORDER SUBMISSION
+// ==================================
 
-  const email = document.getElementById("authEmail").value.trim();
-  const password = document.getElementById("authPassword").value;
-
-  auth.signInWithEmailAndPassword(email,password)
-    .then(() => showToast("Welcome back!"))
-    .catch(error => showToast(error.message));
-}
-
-function signOutUser() {
-  if (!auth) return;
-
-  auth.signOut().then(() => showToast("Signed out."));
-}
-
-if (auth) {
-  auth.onAuthStateChanged(user => {
-    document.getElementById("authForms").classList.toggle(
-      "hidden",!!user
-    );
-
-    document.getElementById("userInfo").classList.toggle(
-      "hidden",!user
-    );
-
-    if (user) {
-      document.getElementById("userEmail").textContent =
-        "Signed in as: " + user.email;
-    }
-
-    if (!user || !isAdmin(user)) {
-      document.getElementById("adminLogin").classList.remove("hidden");
-      document.getElementById("adminPanel").classList.add("hidden");
-    }
-  });
-}
-
-// ===================================
-// ORDER MANAGEMENT
-// ===================================
-
-function isAdmin(user = auth?.currentUser) {
-  return !!user &&
-    user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-}
-
-function placeOrder(event) {
-  event.preventDefault();
-
+function openCheckout() {
   if (!cart.length) {
     showToast("Your cart is empty.");
     return;
   }
 
-  const courier = couriers.find(item => item.id === selectedCourier);
-
-  if (!courier) {
-    showToast("Please select a delivery partner.");
+  if (!currentUser) {
+    closeModal("cartModal");
+    openModal("authModal");
+    showToast("Please sign in before checkout.");
     return;
   }
 
-  const orderId = "FD-" + Date.now();
+  closeModal("cartModal");
 
-  const order = {
-    orderId:orderId,
-    customerName:document.getElementById("customerName").value.trim(),
-    phone:document.getElementById("customerPhone").value.trim(),
-    email:document.getElementById("customerEmail").value.trim(),
-    address:document.getElementById("customerAddress").value.trim(),
-    courierId:courier.id,
-    courier:courier.name,
-    paymentMethod:document.getElementById("paymentMethod").value,
-    paymentStatus:"Pending",
-    status:"Order Received",
-    trackingNumber:"",
-    items:cart.map(item => ({
-      id:item.id,
-      name:item.name,
-      price:item.price,
-      quantity:item.quantity
-    })),
-    total:getCartTotal(),
-    createdAt:new Date().toISOString()
-  };
+  document.getElementById("customerEmail").value =
+    currentUser.email || "";
 
-  if (!order.customerName || !order.email || !order.address) {
-    showToast("Please complete all required fields.");
+  renderCart();
+  openModal("checkoutModal");
+}
+
+async function placeOrder(event) {
+  event.preventDefault();
+
+  if (!currentUser) {
+    showToast("Please sign in first.");
     return;
   }
 
-  if (!firebaseReady || !db) {
-    showToast("Connect Firebase before placing a real order.");
+  if (!cart.length || !selectedCourier) {
+    showToast("Add products and select a courier.");
     return;
   }
 
-  const button = event.submitter;
-  button.disabled = true;
-  button.textContent = "Submitting...";
+  const submitButton = event.submitter;
+  if (submitButton) submitButton.disabled = true;
 
-  db.collection("orders").doc(orderId).set({
-    ...order,
-    userId:auth.currentUser ? auth.currentUser.uid : null,
-    createdAt:firebase.firestore.FieldValue.serverTimestamp()
-  })
-  .then(() => {
+  try {
+    // Recheck prices and products from Firestore when available.
+    const verifiedItems = [];
+
+    for (const item of cart) {
+      const productDoc = await db.collection("products")
+        .doc(item.id).get();
+
+      const product = productDoc.exists
+        ? productDoc.data()
+        : products.find(p => p.id === item.id);
+
+      if (!product || !Number.isFinite(Number(product.price))) {
+        throw new Error("A product is no longer available.");
+      }
+
+      verifiedItems.push({
+        id: item.id,
+        name: product.name,
+        price: Number(product.price),
+        quantity: item.quantity
+      });
+    }
+
+    const subtotal = verifiedItems.reduce((sum, item) =>
+      sum + item.price * item.quantity, 0
+    );
+
+    const discount = localStorage.getItem("formaDiscount") === "claimed"
+      ? subtotal * 0.10
+      : 0;
+
+    const total = subtotal - discount;
+
+    const orderNumber = "FD-" +
+      Date.now().toString().slice(-9);
+
+    const order = {
+      orderNumber,
+      uid: currentUser.uid,
+      customerName: document.getElementById("customerName").value.trim(),
+      customerPhone: document.getElementById("customerPhone").value.trim(),
+      customerEmail: currentUser.email,
+      customerAddress: document.getElementById("customerAddress").value.trim(),
+      items: verifiedItems,
+      courierId: selectedCourier,
+      courierName: couriers.find(c => c.id === selectedCourier)?.name || "",
+      paymentMethod: document.getElementById("paymentMethod").value,
+      subtotal,
+      discount,
+      total,
+      paymentStatus: "Pending",
+      orderStatus: "Pending",
+      trackingNumber: "",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    await db.collection("orders").add(order);
+
     cart = [];
     saveCart();
 
-    closeModal("checkoutModal");
-    document.getElementById("checkoutForm").reset();
+    localStorage.removeItem("formaDiscount");
 
-    showToast("Order received! Order number: " + orderId);
+    document.getElementById("checkoutForm").reset();
+    selectedCourier = "";
+    renderCouriers();
+
+    closeModal("checkoutModal");
+
+    showToast("Order placed! " + orderNumber);
 
     alert(
-      "Thank you for shopping with Forma Doppia!\n\n" +
-      "Order Number: " + orderId +
-      "\nPayment: Pending confirmation" +
-      "\nCourier: " + courier.name
+      "Thank you for ordering from Forma Doppia!\n\n" +
+      "Order Number: " + orderNumber +
+      "\nTotal: " + money(total) +
+      "\nPayment Status: Pending"
     );
 
-    selectedCourier = "";
-  })
-  .catch(error => {
+  } catch (error) {
     console.error(error);
-    showToast("Order could not be submitted. Please try again.");
-  })
-  .finally(() => {
-    button.disabled = false;
-    button.textContent = "Place Order";
-  });
+    showToast("Order failed: " + error.message);
+  } finally {
+    if (submitButton) submitButton.disabled = false;
+  }
 }
 
-// ===================================
-// TRACKING
-// ===================================
+// ==================================
+// 10. ORDER TRACKING
+// ==================================
 
-function trackOrder() {
-  const id = document.getElementById("trackingNumber").value.trim();
+async function trackOrder() {
+  const orderNumber =
+    document.getElementById("trackingNumber").value.trim();
+
   const result = document.getElementById("trackingResult");
 
-  if (!id) {
-    showToast("Enter an order number.");
+  if (!orderNumber) {
+    showToast("Enter your order number.");
     return;
   }
 
-  if (!db) {
-    result.textContent = "Firebase is not configured.";
+  if (!currentUser) {
+    result.innerHTML =
+      "<p>Please sign in to track your own orders.</p>";
     return;
   }
 
-  result.textContent = "Searching order...";
+  result.textContent = "Searching for your order...";
 
-  db.collection("orders").doc(id).get()
-    .then(doc => {
-      if (!doc.exists) {
-        result.textContent = "Order not found.";
-        return;
-      }
+  try {
+    const snapshot = await db.collection("orders")
+      .where("uid", "==", currentUser.uid)
+      .where("orderNumber", "==", orderNumber)
+      .limit(1)
+      .get();
 
-      const order = doc.data();
+    if (snapshot.empty) {
+      result.textContent = "Order not found in your account.";
+      return;
+    }
 
-      result.innerHTML = `
-        <h3>${escapeHTML(order.orderId)}</h3>
-        <p style="margin:10px 0">
-          Courier: <strong>${escapeHTML(order.courier)}</strong>
+    const order = snapshot.docs[0].data();
+
+    result.innerHTML = `
+      <div style="padding:15px;background:#f5f0e7;border-radius:8px">
+        <h3>${escapeHTML(order.orderNumber)}</h3>
+        <p style="margin-top:10px">
+          Status: <span class="status-badge">${escapeHTML(order.orderStatus)}</span>
         </p>
-        <p style="margin:10px 0">
-          Status: <span class="status-badge">
-            ${escapeHTML(order.status)}
-          </span>
+        <p style="margin-top:8px">
+          Payment: ${escapeHTML(order.paymentStatus)}
         </p>
-        <p style="margin:10px 0">
+        <p style="margin-top:8px">
+          Courier: ${escapeHTML(order.courierName)}
+        </p>
+        <p style="margin-top:8px">
           Tracking Number: ${escapeHTML(order.trackingNumber || "Not yet assigned")}
         </p>
-        <p>Payment: ${escapeHTML(order.paymentStatus)}</p>
-      `;
-    })
-    .catch(() => {
-      result.textContent = "Unable to retrieve tracking details.";
-    });
+        <p style="margin-top:8px;font-weight:bold">
+          Total: ${money(order.total)}
+        </p>
+      </div>
+    `;
+
+  } catch (error) {
+    console.error(error);
+    result.textContent = "Unable to track order. Please try again.";
+  }
 }
 
-// ===================================
-// ADMIN DASHBOARD
-// ===================================
+// ==================================
+// 11. ADMIN LOGIN AND DASHBOARD
+// ==================================
 
-function adminSignIn() {
-  if (!auth) {
-    showToast("Firebase configuration required.");
-    return;
-  }
-
+async function adminSignIn() {
   const email = document.getElementById("adminEmail").value.trim();
   const password = document.getElementById("adminPassword").value;
 
-  if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
-    showToast("This account is not authorized as admin.");
-    return;
-  }
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
 
-  auth.signInWithEmailAndPassword(email,password)
-    .then(userCredential => {
-      if (!isAdmin(userCredential.user)) {
-        return auth.signOut().then(() => {
-          throw new Error("Admin access denied.");
-        });
-      }
+    const user = auth.currentUser;
 
-      document.getElementById("adminLogin").classList.add("hidden");
-      document.getElementById("adminPanel").classList.remove("hidden");
+    const adminDoc = await db.collection("admins")
+      .doc(user.uid).get();
 
-      renderAdminCouriers();
-      loadAdminOrders();
+    if (!adminDoc.exists) {
+      await auth.signOut();
+      showToast("This account is not authorized as an admin.");
+      return;
+    }
 
-      showToast("Admin signed in.");
-    })
-    .catch(error => showToast(error.message));
-}
+    isAdmin = true;
+    updateAdminDisplay();
+    loadAdminData();
 
-function adminSignOut() {
-  if (auth) {
-    auth.signOut();
-    closeModal("adminModal");
+    showToast("Admin login successful!");
+
+  } catch (error) {
+    showToast(error.message);
   }
 }
 
-function loadAdminOrders() {
-  if (!db || !isAdmin()) return;
-
-  db.collection("orders")
-    .orderBy("createdAt","desc")
-    .limit(100)
-    .get()
-    .then(snapshot => {
-      orders = snapshot.docs.map(doc => doc.data());
-      renderAdminOrders();
-    })
-    .catch(error => {
-      console.error(error);
-      document.getElementById("adminOrders").textContent =
-        "Unable to load orders. Check Firestore permissions.";
-    });
+function updateAdminDisplay() {
+  if (currentUser && isAdmin) {
+    document.getElementById("adminLogin").classList.add("hidden");
+    document.getElementById("adminPanel").classList.remove("hidden");
+  } else {
+    document.getElementById("adminLogin").classList.remove("hidden");
+    document.getElementById("adminPanel").classList.add("hidden");
+  }
 }
 
-function renderAdminOrders() {
-  const container = document.getElementById("adminOrders");
+async function loadAdminData() {
+  if (!isAdmin || !currentUser) return;
 
-  if (!orders.length) {
-    container.textContent = "No orders yet.";
-    return;
-  }
+  await loadCouriers();
 
-  container.innerHTML = orders.map(order => `
-    <div class="cart-item" style="display:block">
-      <strong>${escapeHTML(order.orderId)}</strong>
-      <p>${escapeHTML(order.customerName)}</p>
-      <p>${peso(order.total)}</p>
-      <p>Status: ${escapeHTML(order.status)}</p>
+  const courierList = document.getElementById("adminCourierList");
+  const ordersContainer = document.getElementById("adminOrders");
 
-      <select id="status-${escapeHTML(order.orderId)}">
-        ${[
-          "Order Received",
-          "Preparing",
-          "Ready for Pickup",
-          "Shipped",
-          "Out for Delivery",
-          "Delivered",
-          "Cancelled"
-        ].map(status => `
-          <option ${order.status === status ? "selected" : ""}
-            value="${status}">${status}</option>
-        `).join("")}
-      </select>
-
-      <input id="tracking-${escapeHTML(order.orderId)}"
-        placeholder="Courier tracking number"
-        value="${escapeHTML(order.trackingNumber || "")}"
-        style="width:100%;padding:9px;margin-top:8px;border:1px solid #ddd">
-
-      <button class="primary-btn full-btn"
-        style="margin-top:8px"
-        onclick="updateOrder('${order.orderId}')">
-        Update Order
-      </button>
+  courierList.innerHTML = couriers.map(courier => `
+    <div class="cart-item">
+      <strong>${escapeHTML(courier.name)}</strong>
+      <span class="status-badge">Available</span>
     </div>
   `).join("");
-}
 
-function updateOrder(id) {
-  if (!db || !isAdmin()) {
-    showToast("Admin access required.");
-    return;
+  try {
+    const snapshot = await db.collection("orders")
+      .orderBy("createdAt", "desc")
+      .limit(50)
+      .get();
+
+    if (snapshot.empty) {
+      ordersContainer.innerHTML =
+        "<p>No orders yet.</p>";
+      return;
+    }
+
+    ordersContainer.innerHTML = snapshot.docs.map(doc => {
+      const order = doc.data();
+
+      return `
+        <div style="padding:15px;border:1px solid #e6e0d5;border-radius:8px;margin:12px 0">
+          <strong>${escapeHTML(order.orderNumber)}</strong>
+          <p style="font-size:12px;margin:8px 0">
+            ${escapeHTML(order.customerName)}
+          </p>
+          <p style="font-size:12px">
+            ${money(order.total)} | ${escapeHTML(order.paymentMethod)}
+          </p>
+          <p style="font-size:12px;margin:8px 0">
+            ${escapeHTML(order.customerAddress)}
+          </p>
+
+          <label style="font-size:12px;font-weight:bold">Order Status</label>
+          <select onchange="updateOrderStatus('${doc.id}',this.value)"
+                  style="width:100%;padding:9px;margin:7px 0">
+            ${["Pending","Processing","Shipped","Delivered","Cancelled"].map(status =>
+              `<option value="${status}" ${order.orderStatus === status ? "selected" : ""}>${status}</option>`
+            ).join("")}
+          </select>
+
+          <label style="font-size:12px;font-weight:bold">Payment Status</label>
+          <select onchange="updatePaymentStatus('${doc.id}',this.value)"
+                  style="width:100%;padding:9px;margin:7px 0">
+            ${["Pending","Paid","Failed","Refunded"].map(status =>
+              `<option value="${status}" ${order.paymentStatus === status ? "selected" : ""}>${status}</option>`
+            ).join("")}
+          </select>
+
+          <label style="font-size:12px;font-weight:bold">Courier Tracking Number</label>
+          <input id="tracking-${doc.id}"
+                 value="${escapeHTML(order.trackingNumber || "")}"
+                 placeholder="Enter tracking number"
+                 style="width:100%;padding:9px;margin:7px 0">
+
+          <button class="primary-btn"
+                  onclick="saveTracking('${doc.id}')"
+                  style="width:100%">
+            Save Tracking Number
+          </button>
+        </div>
+      `;
+    }).join("");
+
+  } catch (error) {
+    console.error(error);
+    ordersContainer.textContent =
+      "Unable to load orders: " + error.message;
   }
-
-  const status = document.getElementById("status-" + id).value;
-  const tracking = document.getElementById("tracking-" + id).value.trim();
-
-  db.collection("orders").doc(id).update({
-    status:status,
-    trackingNumber:tracking,
-    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
-  })
-  .then(() => {
-    showToast("Order updated!");
-    loadAdminOrders();
-    })
-  .catch(error => showToast(error.message));
 }
 
-// ===================================
-// LOAD SAVED DATA
-// ===================================
+async function updateOrderStatus(id, status) {
+  if (!isAdmin) return;
 
-try {
-  cart = JSON.parse(localStorage.getItem("formaCart") || "[]");
-  if (!Array.isArray(cart)) cart = [];
-} catch(error) {
-  cart = [];
-}
+  try {
+    await db.collection("orders").doc(id).update({
+      orderStatus: status,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
 
-loadCouriers();
-renderProducts();
-renderCart();
-renderCouriers();
-
-// Load courier settings from Firestore when available
-if (db) {
-  db.collection("storeSettings").doc("couriers").get()
-    .then(doc => {
-      if (doc.exists && Array.isArray(doc.data().items)) {
-        couriers = doc.data().items;
-        localStorage.setItem("formaCouriers",JSON.stringify(couriers));
-        renderCouriers();
-        renderAdminCouriers();
-      }
-    })
-    .catch(error => console.error("Courier loading:",error));
+    showToast("Order status updated.");
+  } catch (error) {
+    showToast(error.message);
   }
-  // ===================================
-// ADMIN ACCESS SHORTCUT
-// ===================================
-
-// Open admin login by visiting:
-// yourwebsite.com/#admin
-if (location.hash === "#admin") {
-  openModal("adminModal");
 }
+
+async function updatePaymentStatus(id, status) {
+  if (!isAdmin) return;
+
+  try {
+    await db.collection("orders").doc(id).update({
+      paymentStatus: status,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    showToast("Payment status updated.");
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function saveTracking(id) {
+  if (!isAdmin) return;
+
+  const trackingNumber =
+    document.getElementById("tracking-" + id).value.trim();
+
+  try {
+    await db.collection("orders").doc(id).update({
+      trackingNumber,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    showToast("Tracking number saved.");
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function adminSignOut() {
+  await auth.signOut();
+  isAdmin = false;
+  showToast("Admin signed out.");
+  closeModal("adminModal");
+  }
+  // ==================================
+// 12. INITIALIZE WEBSITE
+// ==================================
+
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadProducts();
+  await loadCouriers();
+
+  saveCart();
+  renderCart();
+  showDiscount();
+});
 
 </script>
 
