@@ -354,39 +354,105 @@ footer h3{font:normal 22px Georgia,serif}
   .footer-grid{grid-template-columns:1fr}  
   .search-row{flex-direction:column}  
 }  
-</style>  </head>  
-<body class="locked">  <!-- OPENING CLICKWRAP AGREEMENT -->  <div id="agreementScreen">  
-  <div class="agreement-card">  
-    <img src="logo.png" class="agreement-logo" alt="Forma Doppia Logo">  
-    <h1>Forma Doppia</h1>  
-    <div class="agreement-subtitle">JNHJ FURNISHINGS CO.</div>  <h2>Welcome to our store!</h2>  
-<p class="agreement-description">  
-  Before entering our online store, please read and accept  
-  our Terms of Service and Privacy Policy.  
-</p>  
 
-<div class="agreement-links">  
-  <p><a href="#policies" target="_blank">Read Terms of Service</a></p>  
-  <p><a href="#policies" target="_blank">Read Privacy Policy</a></p>  
-</div>  
+</style>
+</head>
 
-<label class="agreement-check">  
-  <input type="checkbox" id="acceptTerms">  
-  <span>I have read and agree to the Terms of Service.</span>  
-</label>  
+<body class="locked">
 
-<label class="agreement-check">  
-  <input type="checkbox" id="acceptPrivacy">  
-  <span>I have read and agree to the Privacy Policy.</span>  
-</label>  
+<!-- =====================================
+     OPENING CLICKWRAP AGREEMENT
+===================================== -->
 
-<button id="enterStore" disabled>  
-  I AGREE – ENTER WEBSITE  
-</button>  
+<div id="agreementScreen">
 
-<p class="agreement-note">  
-  Both agreements must be accepted before entering.  
-</p>
+  <div class="agreement-card">
+
+    <!-- FORMA DOPPIA LOGO -->
+    <img
+      src="logo.png"
+      class="agreement-logo"
+      alt="Forma Doppia Logo"
+    >
+
+    <h1>Forma Doppia</h1>
+
+    <div class="agreement-subtitle">
+      JNHJ FURNISHINGS CO.
+    </div>
+
+    <h2>Welcome to our store!</h2>
+
+    <p class="agreement-description">
+      Before entering our online store, please read and accept
+      our Terms of Service and Privacy Policy.
+    </p>
+
+    <!-- AGREEMENT LINKS -->
+    <div class="agreement-links">
+
+      <p>
+        <a href="#termsSection">
+          Read Terms of Service
+        </a>
+      </p>
+
+      <p>
+        <a href="#privacySection">
+          Read Privacy Policy
+        </a>
+      </p>
+
+    </div>
+
+    <!-- TERMS CHECKBOX -->
+    <label class="agreement-check">
+
+      <input
+        type="checkbox"
+        id="acceptTerms"
+      >
+
+      <span>
+        I have read and agree to the Terms of Service.
+      </span>
+
+    </label>
+
+    <!-- PRIVACY CHECKBOX -->
+    <label class="agreement-check">
+
+      <input
+        type="checkbox"
+        id="acceptPrivacy"
+      >
+
+      <span>
+        I have read and agree to the Privacy Policy.
+      </span>
+
+    </label>
+
+    <!-- ENTER WEBSITE BUTTON -->
+    <button
+      id="enterStore"
+      type="button"
+      disabled
+    >
+      I AGREE – ENTER WEBSITE
+    </button>
+
+    <!-- AGREEMENT NOTICE -->
+    <p class="agreement-note">
+      Both agreements must be accepted before entering.
+    </p>
+
+  </div>
+
+</div>
+
+<!-- END OPENING CLICKWRAP AGREEMENT -->
+
 
   </div>  
 </div>  <div id="websiteContent" class="hidden">  <div class="topbar">  
