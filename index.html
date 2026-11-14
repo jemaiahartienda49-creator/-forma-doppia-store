@@ -1503,6 +1503,7 @@ function showProduct(id){
   });
 }
 
+
 /* ==================================
    7. SIGN UP AND LOGIN
 ================================== */
@@ -1510,8 +1511,7 @@ function showProduct(id){
 let authMode = "signup";
 let currentUser = null;
 
-function openAuth(mode){
-
+function openAuth(mode) {
   authMode = mode;
 
   $("authTitle").textContent =
@@ -1521,49 +1521,41 @@ function openAuth(mode){
     mode === "signup" ? "Create Account" : "Log In";
 
   $("signupAgreement").classList.toggle(
-    "hidden",
-    mode !== "signup"
+    "hidden", mode !== "signup"
   );
 
   $("authMessage").textContent = "";
-
   openModal("authModal");
 }
 
-$("authButton").addEventListener("click",()=>{
+$("authButton").addEventListener("click", () => {
   openAuth("signup");
 });
 
-$("switchAuth").addEventListener("click",event=>{
+$("switchAuth").addEventListener("click", event => {
   event.preventDefault();
-
-  openAuth(
-    authMode === "signup" ? "login" : "signup"
-  );
+  openAuth(authMode === "signup" ? "login" : "signup");
 });
 
-function firebaseError(error){
-
+function firebaseError(error) {
   const messages = {
-    "auth/email-already-in-use":"Email is already registered.",
-    "auth/invalid-email":"Invalid email address.",
-    "auth/weak-password":"Password must be at least 6 characters.",
-    "auth/invalid-credential":"Incorrect email or password.",
-    "auth/network-request-failed":"Please check your internet connection.",
-    "permission-denied":"Database permission denied. Check Firestore Rules."
+    "auth/email-already-in-use": "Email is already registered.",
+    "auth/invalid-email": "Invalid email address.",
+    "auth/weak-password": "Password must be at least 6 characters.",
+    "auth/invalid-credential": "Incorrect email or password.",
+    "auth/network-request-failed": "Please check your internet connection.",
+    "auth/requires-recent-login": "Please log in again before changing your password.",
+    "permission-denied": "Database permission denied. Check Firestore Rules."
   };
 
-  return messages[error.code] ||
-    error.message ||
-    "Something went wrong.";
+  return messages[error.code] || error.message || "Something went wrong.";
 }
 
-$("authSubmit").addEventListener("click",async()=>{
-
+$("authSubmit").addEventListener("click", async () => {
   const email = $("authEmail").value.trim();
   const password = $("authPassword").value;
 
-  if(!email || !password){
+  if (!email || !password) {
     $("authMessage").textContent =
       "Please enter your email and password.";
     return;
@@ -1572,88 +1564,96 @@ $("authSubmit").addEventListener("click",async()=>{
   $("authSubmit").disabled = true;
   $("authMessage").textContent = "Please wait...";
 
-  try{
-
-    if(authMode === "signup"){
-
-      if(
+  try {
+    if (authMode === "signup") {
+      if (
         !$("signupTerms").checked ||
         !$("signupPrivacy").checked
-      ){
+      ) {
         $("authMessage").textContent =
           "Please accept both agreements.";
         return;
       }
 
       const credential =
-        await createUserWithEmailAndPassword(
-          auth,email,password
-        );
+        await createUserWithEmailAndPassword(auth, email, password);
 
       await setDoc(
-        doc(db,"customers",credential.user.uid),
+        doc(db, "customers", credential.user.uid),
         {
-          email:credential.user.email,
-          termsAccepted:true,
-          privacyAccepted:true,
-          agreementVersion:AGREEMENT_VERSION,
-          acceptedAt:serverTimestamp(),
-          createdAt:serverTimestamp()
-        }
+          email: credential.user.email,
+          fullName: "",
+          phone: "",
+          notifications: {
+            orders: true,
+            promotions: true,
+            account: true
+          },
+          termsAccepted: true,
+          privacyAccepted: true,
+          agreementVersion: AGREEMENT_VERSION,
+          acceptedAt: serverTimestamp(),
+          createdAt: serverTimestamp()
+        },
+        { merge: true }
       );
 
-    }else{
-
-      await signInWithEmailAndPassword(
-        auth,email,password
-      );
-
+    } else {
+      await signInWithEmailAndPassword(auth, email, password);
     }
 
     $("authMessage").textContent = "Successful!";
 
-    setTimeout(()=>{
-      closeModal("authModal");
-    },500);
+    setTimeout(() => closeModal("authModal"), 500);
 
-  }catch(error){
+  } catch (error) {
+    $("authMessage").textContent = firebaseError(error);
 
-    $("authMessage").textContent =
-      firebaseError(error);
-
-  }finally{
-
+  } finally {
     $("authSubmit").disabled = false;
-
   }
 });
+  
+  
 
 /* ==================================
    8. AUTOMATIC LOGIN STATE
 ================================== */
 
-onAuthStateChanged(auth,user=>{
-
+onAuthStateChanged(auth, async user => {
   currentUser = user;
 
-  $("authButton").classList.toggle(
-    "hidden",!!user
-  );
+  $("authButton").classList.toggle("hidden", !!user);
+  $("accountButton").classList.toggle("hidden", !user);
+  $("logoutButton").classList.toggle("hidden", !user);
 
-  $("accountButton").classList.toggle(
-    "hidden",!user
-  );
-
-  $("logoutButton").classList.toggle(
-    "hidden",!user
-  );
-
-  if(user){
+  if (user) {
     $("accountEmail").textContent =
       user.email || "Customer Account";
-  }
 
+    $("accountVerification").textContent =
+      user.emailVerified ? "Email status: Verified" :
+      "Email status: Not verified";
+
+  } else {
+    $("accountEmail").textContent = "";
+    $("accountVerification").textContent = "";
+
+    $("settingsPanel").classList.add("hidden");
+    $("accountMain").classList.remove("hidden");
+  }
 });
+
+// Open My Account
+$("accountButton").addEventListener("click", async () => {
+  $("accountMain").classList.remove("hidden");
+  $("settingsPanel").classList.add("hidden");
+
+  openModal("accountModal");
+
+  await loadOrders();
+});
+  
 
 /* ==================================
    9. LOGOUT
@@ -1889,6 +1889,243 @@ async function loadOrders(){
 
 }
 
+/* ==================================
+   12A. FORMA DOPPIA ACCOUNT SETTINGS
+================================== */
+
+// Open Settings
+$("openSettings").addEventListener("click", async () => {
+  $("accountMain").classList.add("hidden");
+  $("settingsPanel").classList.remove("hidden");
+
+  await loadSettings();
+});
+
+// Return to Account
+$("backToAccount").addEventListener("click", () => {
+  $("settingsPanel").classList.add("hidden");
+  $("accountMain").classList.remove("hidden");
+});
+
+// Load customer information
+async function loadSettings() {
+  if (!currentUser) return;
+
+  $("settingsMessage").textContent = "Loading settings...";
+
+  try {
+    const customerRef = doc(db, "customers", currentUser.uid);
+    const customerSnap = await getDoc(customerRef);
+
+    const data = customerSnap.exists()
+      ? customerSnap.data()
+      : {};
+
+    $("settingsName").value =
+      data.fullName || currentUser.displayName || "";
+
+    $("settingsPhone").value = data.phone || "";
+
+    $("settingsEmail").value =
+      currentUser.email || "";
+
+    const preferences = data.notifications || {};
+
+    $("orderNotifications").checked =
+      preferences.orders !== false;
+
+    $("promoNotifications").checked =
+      preferences.promotions !== false;
+
+    $("accountNotifications").checked =
+      preferences.account !== false;
+
+    $("accountVerification").textContent =
+      currentUser.emailVerified
+        ? "Email status: Verified"
+        : "Email status: Not verified";
+
+    $("settingsMessage").textContent = "";
+
+  } catch (error) {
+    $("settingsMessage").textContent = firebaseError(error);
+  }
+}
+
+// Save Profile
+$("saveProfile").addEventListener("click", async () => {
+  if (!currentUser) return;
+
+  const fullName = $("settingsName").value.trim();
+  const phone = $("settingsPhone").value.trim();
+
+  if (!fullName || !phone) {
+    $("settingsMessage").textContent =
+      "Please complete your name and contact number.";
+    return;
+  }
+
+  $("saveProfile").disabled = true;
+
+  try {
+    await setDoc(
+      doc(db, "customers", currentUser.uid),
+      {
+        fullName: fullName,
+        phone: phone,
+        updatedAt: serverTimestamp()
+      },
+      { merge: true }
+    );
+
+    await updateProfile(currentUser, {
+      displayName: fullName
+    });
+
+    $("settingsMessage").textContent =
+      "Your profile has been updated successfully.";
+
+  } catch (error) {
+    $("settingsMessage").textContent = firebaseError(error);
+
+  } finally {
+    $("saveProfile").disabled = false;
+  }
+});
+
+// Change Password
+$("changePassword").addEventListener("click", async () => {
+  if (!currentUser || !currentUser.email) return;
+
+  const currentPassword = $("currentPassword").value;
+  const newPassword = $("newPassword").value;
+  const confirmPassword = $("confirmPassword").value;
+
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    $("settingsMessage").textContent =
+      "Please complete all password fields.";
+    return;
+  }
+
+  if (newPassword.length < 6) {
+    $("settingsMessage").textContent =
+      "New password must contain at least 6 characters.";
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    $("settingsMessage").textContent =
+      "New passwords do not match.";
+    return;
+  }
+
+  if (currentPassword === newPassword) {
+    $("settingsMessage").textContent =
+      "Your new password must be different.";
+    return;
+  }
+
+  $("changePassword").disabled = true;
+
+  try {
+    const credential = EmailAuthProvider.credential(
+      currentUser.email,
+      currentPassword
+    );
+
+    await reauthenticateWithCredential(
+      currentUser,
+      credential
+    );
+
+    await updatePassword(currentUser, newPassword);
+
+    $("currentPassword").value = "";
+    $("newPassword").value = "";
+    $("confirmPassword").value = "";
+
+    $("settingsMessage").textContent =
+      "Your password has been updated successfully.";
+
+  } catch (error) {
+    $("settingsMessage").textContent =
+      firebaseError(error);
+
+  } finally {
+    $("changePassword").disabled = false;
+  }
+});
+
+// Email Verification
+$("verifyEmail").addEventListener("click", async () => {
+  if (!currentUser) return;
+
+  try {
+    await sendEmailVerification(currentUser);
+
+    $("settingsMessage").textContent =
+      "Verification email sent. Please check your inbox.";
+
+  } catch (error) {
+    $("settingsMessage").textContent =
+      firebaseError(error);
+  }
+});
+
+// Appearance - Dark Mode
+function applyTheme(isDark) {
+  document.body.classList.toggle("dark-theme", isDark);
+
+  $("darkModeToggle").checked = isDark;
+
+  localStorage.setItem(
+    "formaDoppiaTheme",
+    isDark ? "dark" : "light"
+  );
+}
+
+const savedTheme =
+  localStorage.getItem("formaDoppiaTheme") || "light";
+
+applyTheme(savedTheme === "dark");
+
+$("darkModeToggle").addEventListener("change", event => {
+  applyTheme(event.target.checked);
+});
+
+// Save Notification Preferences
+$("saveNotifications").addEventListener("click", async () => {
+  if (!currentUser) return;
+
+  $("saveNotifications").disabled = true;
+
+  try {
+    await setDoc(
+      doc(db, "customers", currentUser.uid),
+      {
+        notifications: {
+          orders: $("orderNotifications").checked,
+          promotions: $("promoNotifications").checked,
+          account: $("accountNotifications").checked
+        },
+        updatedAt: serverTimestamp()
+      },
+      { merge: true }
+    );
+
+    $("settingsMessage").textContent =
+      "Notification preferences saved successfully.";
+
+  } catch (error) {
+    $("settingsMessage").textContent =
+      firebaseError(error);
+
+  } finally {
+    $("saveNotifications").disabled = false;
+  }
+});
+  
+  
 /* ==================================
    13. BUTTON EVENTS
 ================================== */
