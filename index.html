@@ -1102,55 +1102,50 @@ $(id).classList.remove("show");
 
 
 /* ==================================
-   3. OPENING CLICKWRAP AGREEMENT
+3. OPENING CLICKWRAP AGREEMENT
 ================================== */
 
-const AGREEMENT_VERSION = "2026-11-14-v1";
+const AGREEMENT_VERSION = "2026-11-09-v1";
 
-const agreementScreen = document.getElementById("agreementScreen");
-const acceptTerms = document.getElementById("acceptTerms");
-const acceptPrivacy = document.getElementById("acceptPrivacy");
-const enterStore = document.getElementById("enterStore");
-const websiteContent = document.getElementById("websiteContent");
+const savedAgreement =
+localStorage.getItem("formaDoppiaAgreement");
 
-function checkAgreement() {
-    const bothAccepted =
-        acceptTerms.checked && acceptPrivacy.checked;
-
-    enterStore.disabled = !bothAccepted;
-
-    enterStore.style.opacity = bothAccepted ? "1" : "0.5";
-    enterStore.style.cursor = bothAccepted ? "pointer" : "not-allowed";
+if(savedAgreement === AGREEMENT_VERSION){
+$("agreementScreen").style.display = "none";
+$("websiteContent").classList.remove("hidden");
+document.body.classList.remove("locked");
 }
 
-acceptTerms.addEventListener("change", checkAgreement);
-acceptPrivacy.addEventListener("change", checkAgreement);
+function checkAgreement(){
+$("enterStore").disabled = !(
+$("acceptTerms").checked &&
+$("acceptPrivacy").checked
+);
+}
 
-enterStore.addEventListener("click", function (event) {
-    event.preventDefault();
+$("acceptTerms").addEventListener("change",checkAgreement);
+$("acceptPrivacy").addEventListener("change",checkAgreement);
 
-    if (!acceptTerms.checked || !acceptPrivacy.checked) {
-        alert("Please accept both agreements before entering.");
-        return;
-    }
+$("enterStore").addEventListener("click",()=>{
+if(!$("acceptTerms").checked ||
+!$("acceptPrivacy").checked){
+return;
+}
 
-    localStorage.setItem(
-        "formaDoppiaAgreement",
-        AGREEMENT_VERSION
-    );
+localStorage.setItem(
+"formaDoppiaAgreement",
+AGREEMENT_VERSION
+);
 
-    localStorage.setItem(
-        "formaDoppiaAgreementDate",
-        new Date().toISOString()
-    );
+localStorage.setItem(
+"formaDoppiaAgreementDate",
+new Date().toISOString()
+);
 
-    agreementScreen.style.display = "none";
-    websiteContent.hidden = false;
-
-    document.body.classList.remove("locked");
+$("agreementScreen").style.display = "none";
+$("websiteContent").classList.remove("hidden");
+document.body.classList.remove("locked");
 });
-
-checkAgreement();
 
 
 /* ==================================
