@@ -1098,57 +1098,6 @@ $(id).classList.remove("show");
 
 
 /* ==================================
-   3. OPENING CLICKWRAP AGREEMENT
-================================== */
-
-const AGREEMENT_VERSION = "2026-11-09-v1";
-
-const savedAgreement =
-  localStorage.getItem("formaDoppiaAgreement");
-
-if (savedAgreement === AGREEMENT_VERSION) {
-  $("agreementScreen").style.display = "none";
-  $("websiteContent").classList.remove("hidden");
-  document.body.classList.remove("locked");
-}
-
-function checkAgreement() {
-  const terms = $("acceptTerms").checked;
-  const privacy = $("acceptPrivacy").checked;
-
-  $("enterStore").disabled = !(terms && privacy);
-}
-
-$("acceptTerms").addEventListener("change", checkAgreement);
-$("acceptPrivacy").addEventListener("change", checkAgreement);
-
-checkAgreement();
-
-$("enterStore").addEventListener("click", () => {
-  if (
-    !$("acceptTerms").checked ||
-    !$("acceptPrivacy").checked
-  ) {
-    return;
-  }
-
-  localStorage.setItem(
-    "formaDoppiaAgreement",
-    AGREEMENT_VERSION
-  );
-
-  localStorage.setItem(
-    "formaDoppiaAgreementDate",
-    new Date().toISOString()
-  );
-
-  $("agreementScreen").style.display = "none";
-  $("websiteContent").classList.remove("hidden");
-  document.body.classList.remove("locked");
-});
-  
-
-/* ==================================
 4. PRODUCT SEARCH AND FILTERS
 ================================== */
 
