@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>  <html lang="en">  
 <head>  
 <meta charset="UTF-8">  
@@ -31,6 +30,97 @@ button{cursor:pointer}
 a{text-decoration:none;color:inherit}  
 .container{width:min(1160px,92%);margin:auto}  
 .hidden{display:none!important}  
+  
+/* OPENING CLICKWRAP */  
+#agreementScreen{  
+  position:fixed;  
+  inset:0;  
+  z-index:99999;  
+  background:linear-gradient(135deg,#102b22,#285744);  
+  display:flex;  
+  justify-content:center;  
+  align-items:center;  
+  padding:18px;  
+  overflow-y:auto;  
+}  
+.agreement-card{  
+  width:min(530px,100%);  
+  background:white;  
+  border-radius:12px;  
+  padding:30px;  
+  box-shadow:0 20px 60px #0004;  
+}  
+.agreement-logo{  
+  width:85px;  
+  height:85px;  
+  object-fit:contain;  
+  display:block;  
+  margin:0 auto 10px;  
+}  
+.agreement-card h1{  
+  text-align:center;  
+  color:var(--green);  
+  font-family:Georgia,serif;  
+  font-size:30px;  
+  margin:5px 0;  
+}  
+.agreement-subtitle{  
+  text-align:center;  
+  color:var(--muted);  
+  font-size:12px;  
+  letter-spacing:2px;  
+  margin-bottom:22px;  
+}  
+.agreement-card h2{  
+  font-family:Georgia,serif;  
+  color:var(--green);  
+  font-size:23px;  
+}  
+.agreement-description{  
+  font-size:13px;  
+  color:var(--muted);  
+}  
+.agreement-links{  
+  background:var(--cream);  
+  border-radius:7px;  
+  padding:14px;  
+  margin:17px 0;  
+}  
+.agreement-links a{  
+  color:var(--green);  
+  text-decoration:underline;  
+  font-weight:bold;  
+}  
+.agreement-check{  
+  display:flex;  
+  align-items:flex-start;  
+  gap:10px;  
+  font-size:13px;  
+  margin:13px 0;  
+}  
+.agreement-check input{  
+  margin-top:5px;  
+  accent-color:var(--green);  
+}  
+#enterStore{  
+  width:100%;  
+  border:0;  
+  border-radius:5px;  
+  padding:14px;  
+  margin-top:12px;  
+  background:var(--green);  
+  color:white;  
+  font-weight:bold;  
+}  
+#enterStore:disabled{  
+  opacity:.4;  
+  cursor:not-allowed;  
+}  
+.agreement-note{  
+  text-align:center;  
+  font-size:11px;  
+  color:var(--muted);  
+}  
   
 /* HEADER */  
 .topbar{  
@@ -263,6 +353,40 @@ footer h3{font:normal 22px Georgia,serif}
   .footer-grid{grid-template-columns:1fr}  
   .search-row{flex-direction:column}  
 }  
+</style> 
+</head>  
+<body class="locked">  <!-- OPENING CLICKWRAP AGREEMENT -->  <div id="agreementScreen">  
+  <div class="agreement-card">  
+    <img src="logo.png" class="agreement-logo" alt="Forma Doppia Logo">  
+    <h1>Forma Doppia</h1>  
+    <div class="agreement-subtitle">JNHJ FURNISHINGS CO.</div>  <h2>Welcome to our store!</h2>  
+<p class="agreement-description">  
+  Before entering our online store, please read and accept  
+  our Terms of Service and Privacy Policy.  
+</p>  
+
+<div class="agreement-links">  
+  <p><a href="#policies" target="_blank">Read Terms of Service</a></p>  
+  <p><a href="#policies" target="_blank">Read Privacy Policy</a></p>  
+</div>  
+
+<label class="agreement-check">  
+  <input type="checkbox" id="acceptTerms">  
+  <span>I have read and agree to the Terms of Service.</span>  
+</label>  
+
+<label class="agreement-check">  
+  <input type="checkbox" id="acceptPrivacy">  
+  <span>I have read and agree to the Privacy Policy.</span>  
+</label>  
+
+<button id="enterStore" disabled>  
+  I AGREE – ENTER WEBSITE  
+</button>  
+
+<p class="agreement-note">  
+  Both agreements must be accepted before entering.  
+</p>
 
   </div>  
 </div>  <div id="websiteContent" class="hidden">  <div class="topbar">  
@@ -977,7 +1101,53 @@ $(id).classList.remove("show");
 }
 
 /* ==================================
-3. PRODUCT SEARCH AND FILTERS
+3. OPENING CLICKWRAP AGREEMENT
+================================== */
+
+const AGREEMENT_VERSION = "2026-11-09-v1";
+
+const savedAgreement =
+localStorage.getItem("formaDoppiaAgreement");
+
+if(savedAgreement === AGREEMENT_VERSION){
+$("agreementScreen").style.display = "none";
+$("websiteContent").classList.remove("hidden");
+document.body.classList.remove("locked");
+}
+
+function checkAgreement(){
+$("enterStore").disabled = !(
+$("acceptTerms").checked &&
+$("acceptPrivacy").checked
+);
+}
+
+$("acceptTerms").addEventListener("change",checkAgreement);
+$("acceptPrivacy").addEventListener("change",checkAgreement);
+
+$("enterStore").addEventListener("click",()=>{
+if(!$("acceptTerms").checked ||
+!$("acceptPrivacy").checked){
+return;
+}
+
+localStorage.setItem(
+"formaDoppiaAgreement",
+AGREEMENT_VERSION
+);
+
+localStorage.setItem(
+"formaDoppiaAgreementDate",
+new Date().toISOString()
+);
+
+$("agreementScreen").style.display = "none";
+$("websiteContent").classList.remove("hidden");
+document.body.classList.remove("locked");
+});
+
+/* ==================================
+4. PRODUCT SEARCH AND FILTERS
 ================================== */
 
 let activeFilter = "all";
@@ -1077,7 +1247,7 @@ renderProducts();
 });
 
 /* ==================================
-4. SHOPPING CART
+5. SHOPPING CART
 ================================== */
 
 let cart = [];
@@ -1202,7 +1372,7 @@ openModal("cartModal");
 });
 
 /* ==================================
-5. PRODUCT DETAILS
+6. PRODUCT DETAILS
 ================================== */
 
 function showProduct(id){
@@ -1241,7 +1411,7 @@ closeModal("productModal");
 }
 
 /* ==================================
-6. SIGN UP AND LOGIN
+7. SIGN UP AND LOGIN
 ================================== */
 
 let authMode = "signup";
@@ -1372,7 +1542,7 @@ $("authSubmit").disabled = false;
 });
 
 /* ==================================
-7. AUTOMATIC LOGIN STATE
+8. AUTOMATIC LOGIN STATE
 ================================== */
 
 onAuthStateChanged(auth,user=>{
@@ -1399,7 +1569,7 @@ user.email || "Customer Account";
 });
 
 /* ==================================
-8. LOGOUT
+9. LOGOUT
 ================================== */
 
 $("logoutButton").addEventListener("click",async()=>{
@@ -1419,7 +1589,7 @@ alert(firebaseError(error));
 });
 
 /* ==================================
-9. CHECKOUT
+10. CHECKOUT
 ================================== */
 
 $("checkoutButton").addEventListener("click",()=>{
@@ -1447,7 +1617,7 @@ openModal("checkoutModal");
 });
 
 /* ==================================
-10. SAVE ORDER TO FIRESTORE
+11. SAVE ORDER TO FIRESTORE
 ================================== */
 
 $("placeOrder").addEventListener("click",async()=>{
@@ -1562,7 +1732,7 @@ $("placeOrder").disabled = false;
 });
 
 /* ==================================
-11. CUSTOMER ORDER HISTORY
+12. CUSTOMER ORDER HISTORY
 ================================== */
 
 $("accountButton").addEventListener("click",async()=>{
@@ -1634,7 +1804,7 @@ $("myOrders").textContent =
 }
 
 /* ==================================
-12. BUTTON EVENTS
+13. BUTTON EVENTS
 ================================== */
 
 document.addEventListener("click",event=>{
@@ -1733,7 +1903,7 @@ if(event.target===modal){
 });
 
 /* ==================================
-13. INITIALIZATION
+14. INITIALIZATION
 ================================== */
 
 $("currentYear").textContent =
