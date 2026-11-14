@@ -1503,7 +1503,6 @@ function showProduct(id){
   });
 }
 
-
 /* ==================================
    7. SIGN UP AND LOGIN
 ================================== */
@@ -1614,8 +1613,6 @@ $("authSubmit").addEventListener("click", async () => {
   }
 });
   
-  
-
 /* ==================================
    8. AUTOMATIC LOGIN STATE
 ================================== */
@@ -1820,14 +1817,6 @@ try{
 /* ==================================
    12. CUSTOMER ORDER HISTORY
 ================================== */
-
-$("accountButton").addEventListener("click",async()=>{
-
-  openModal("accountModal");
-
-  await loadOrders();
-
-});
 
 async function loadOrders(){
 
@@ -2219,7 +2208,6 @@ document.querySelectorAll(".modal").forEach(modal=>{
 
   });
 
-});
 
 /* ==================================
    14. INITIALIZATION
